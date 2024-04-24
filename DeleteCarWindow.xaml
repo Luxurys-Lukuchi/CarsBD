@@ -1,0 +1,18 @@
+﻿<Window x:Class="CarsBD.DeleteCarWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="DeleteCarWindow" Height="250" Width="250">
+    <Grid Margin="10,10,10,10">
+        <Label Content="Выберите метод удаления:" VerticalAlignment="Top"/>
+        <RadioButton x:Name="deleteByIDRadioButton" Content="Удалить по ID" VerticalAlignment="Top" Margin="0,80,0,0"/>
+        <RadioButton x:Name="deleteByNumberRadioButton" Content="Удалить по номеру" VerticalAlignment="Top" Margin="0,108,0,0"/>
+        <TextBox x:Name="carIdentifierTextBox" VerticalAlignment="Top" Margin="0,40,0,0"/>
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,0,15" RenderTransformOrigin="0.495,3.415">
+            <Button Content="Удалить" Click="deleteButton_Click" Margin="0,0,10,0"/>
+            <Button Content="Отмена" Click="cancelButton_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>
+
+
+

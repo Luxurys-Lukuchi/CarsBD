@@ -1,0 +1,52 @@
+﻿<Window x:Class="CarsBD.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:CarsBD"
+        mc:Ignorable="d"
+        Title="Car Database" Height="550" Width="850" MinHeight="450" MinWidth="850">
+    <Window.Resources>
+        <!-- Style for DataGridRows -->
+        <Style TargetType="{x:Type DataGridRow}">
+            <Style.Triggers>
+                <!-- Change background color for "Доступна" -->
+                <DataTrigger Binding="{Binding Статус}" Value="Доступна">
+                    <Setter Property="Background" Value="LightGreen"/>
+                </DataTrigger>
+                <!-- Change background color for "Не доступна" -->
+                <DataTrigger Binding="{Binding Статус}" Value="Не доступна">
+                    <Setter Property="Background" Value="LightPink"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+    <Grid Background="#FF404044">
+        <!--//MainWindow.xaml.cs-->
+        <DataGrid x:Name="dataGrid" MinHeight="150" Margin="75,30,10,0" VerticalAlignment="Top" Height="300"/>
+        <Menu Padding="3" Height="25" VerticalAlignment="Top">
+            <MenuItem Header="File" Width="60" ToolTip="File operations" FontFamily="Arial Black">
+                <MenuItem Header="Load" Click="MIFLoad_Click" ToolTip="Load data (Ctrl + O)"/>
+                <MenuItem Header="Save" Click="MIFSave_Click" ToolTip="Save data (Ctrl + S) "/>
+            </MenuItem>
+            <MenuItem Header="Settings" Width="65" FontFamily="Arial Black">
+                <MenuItem x:Name="MISAutosave" Header="Autosave" ToolTip="on/off Autosave" IsCheckable="True" Checked="MISAutosave_Checked" Unchecked="MISAutosave_Unchecked"/>
+            </MenuItem>
+            <MenuItem Header="Help" Width="60" FontFamily="Arial Black">
+                <MenuItem Header="About" Click="MIAbProgram_Click" ToolTip="info about avtor"/>
+                <MenuItem Header="Developer" Click="MIAbDeveloper_Click" ToolTip="info about programm" />
+            </MenuItem>
+        </Menu>
+        <ToolBarTray Orientation="Vertical" Margin="0,22,734,0" HorizontalAlignment="Left" Width="70">
+            <ToolBar Height="502" VerticalAlignment="Top" Background="#CCCCCC" BorderBrush="Black" FontSize="12">
+                <Button x:Name="addButton" Content="Add" Width="60" Height="30" Click="addButton_Click" ToolTip="add car in BD (Ctrl + N)" FontFamily="Arial Black" />
+                <Button x:Name="removeButton" Content="Remove" Width="60" Height="30" Click="removeButton_Click" ToolTip="Delete car in BD" FontFamily="Arial Black" />
+                <Button x:Name="searchButton" Content="Search" Width="60" Height="30" Click="searchButton_Click" ToolTip="Serch car in BD (Ctrl + F)" FontFamily="Arial Black" />
+                <Button x:Name="clearButton" Content="Clear" Width="60" Height="30" Click="clearButton_Click" ToolTip="Clear DataGrid" FontFamily="Arial Black" />
+                <Separator/>
+            </ToolBar>
+        </ToolBarTray>
+        <TextBox x:Name="TBWarning" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Margin="75,344,10,10" Height="150" IsReadOnly="True" HorizontalScrollBarVisibility="Disabled" ToolTip="info" TextChanged="TBWarning_TextChanged"/>
+    </Grid>
+</Window>
+
