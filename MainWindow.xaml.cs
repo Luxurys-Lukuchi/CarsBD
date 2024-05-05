@@ -1,6 +1,7 @@
 ﻿using Npgsql;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Data;
 using System.Linq;
 using System.Runtime.ConstrainedExecution;
@@ -29,21 +30,32 @@ namespace CarsBD
 
         // Конструктор класса MainWindow
         // Конструктор MainWindow
+        private ObservableCollection<Car> carsCollection;
+        private DataTable dataTable;
+
         public MainWindow()
         {
             InitializeComponent();
             dbManager = new DatabaseManager(connectionString);
+            dbManager.MessageRaised += HandleMessageRaised; // Подписка на событие из DatabaseManager
             InitializeAutoSaveTimer();
-            // Привязка обработчиков событий к горячим клавишам
             Loaded += MainWindow_Loaded;
-        }
 
+            carsCollection = new ObservableCollection<Car>();
+            dataTable = new DataTable();
+        }
         // Метод инициализации таймера для автосохранения
         private void InitializeAutoSaveTimer()
         {
             autoSaveTimer = new DispatcherTimer();
             autoSaveTimer.Interval = TimeSpan.FromMinutes(1); // Интервал автосохранения - 1 минута
             autoSaveTimer.Tick += AutoSaveTimer_Tick;
+        }
+
+        // Обработчик события для обновления TextBox при получении сообщения
+        private void HandleMessageRaised(object sender, string message)
+        {
+            UpdateWarningText(message);
         }
 
         // Метод для обработки события загрузки окна
@@ -117,10 +129,16 @@ namespace CarsBD
         }
 
         // Метод загрузки данных из базы данных
+        // Метод загрузки данных из базы данных
         private void LoadDataFromDatabase()
         {
+            string errorMessage = ""; // Создаем пустую строку для хранения сообщений об ошибках
+
             try
             {
+                // Очищаем список автомобилей перед загрузкой новых данных
+                carsCollection.Clear();
+
                 // Создание подключения к базе данных PostgreSQL
                 using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
                 {
@@ -132,37 +150,62 @@ namespace CarsBD
                         NpgsqlDataAdapter adapter = new NpgsqlDataAdapter(cmd);
                         DataTable dataTable = new DataTable();
                         adapter.Fill(dataTable); // Заполнение DataTable данными из базы данных
-                        dataGrid.ItemsSource = dataTable.DefaultView; // Установка источника данных для DataGrid
+
+                        // Заполнение коллекции автомобилей данными из DataTable
+                        foreach (DataRow row in dataTable.Rows)
+                        {
+                            carsCollection.Add(new Car
+                            {
+                                ID = Convert.ToInt32(row["ID"]),
+                                Марка = row["Марка"].ToString(),
+                                Модель = row["Модель"].ToString(),
+                                Номер = row["Номер"].ToString(),
+                                Статус = row["Статус"].ToString()
+                            });
+                        }
                     }
                 }
+
+                // Установка источника данных для DataGrid равным вашей коллекции carsCollection
+                dataGrid.ItemsSource = carsCollection;
             }
             catch (NpgsqlException ex)
             {
-                MessageBox.Show($"Ошибка при загрузке данных из базы данных: {ex.Message}"); // Вывод сообщения об ошибке
+                errorMessage = "Ошибка при загрузке данных из базы данных: " + ex.Message; // Формируем сообщение об ошибке
+            }
+
+            // После завершения блока try-catch выводим сообщение об ошибке (если оно есть)
+            if (!string.IsNullOrEmpty(errorMessage))
+            {
+                UpdateWarningText(errorMessage); // Выводим сообщение об ошибке
             }
         }
+
+
+
+
 
         // Метод сохранения данных в базу данных
         private void SaveDataToDatabase()
         {
-            List<Car> carsToSave = new List<Car>();
-            foreach (DataRowView row in dataGrid.ItemsSource)
+            try
             {
-                // Создание объекта Car на основе данных из строки DataGrid
-                Car car = new Car
+                foreach (Car car in carsCollection)
                 {
-                    ID = Convert.ToInt32(row["ID"]),
-                    Марка = row["Марка"].ToString(),
-                    Модель = row["Модель"].ToString(),
-                    Номер = row["Номер"].ToString(),
-                    Статус = row["Статус"].ToString()
-                };
-                carsToSave.Add(car); // Добавление созданного объекта Car в список
+                    dbManager.SaveCar(car);
+                }
+                UpdateWarningText("Данные успешно сохранены в базе данных PostgreSQL.");
             }
-
-            dbManager.SaveCars(carsToSave); // Сохранение списка автомобилей в базу данных
+            catch (NpgsqlException ex)
+            {
+                UpdateWarningText("Ошибка при сохранении данных в базе данных PostgreSQL:");
+            }
         }
 
+
+
+
+        // Обработчик события клика по кнопке addButton
         // Обработчик события клика по кнопке addButton
         private void addButton_Click(object sender, RoutedEventArgs e)
         {
@@ -177,25 +220,26 @@ namespace CarsBD
                 // Проверка уникальности ID
                 if (newCar.ID != 0)
                 {
-                    MessageBox.Show("ID должен быть уникальным.");
+                    UpdateWarningText("ID должен быть уникальным.");
                     return;
                 }
 
                 // Проверка уникальности государственного номера
                 if (!dbManager.IsCarNumberUnique(newCar.Номер))
                 {
-                    MessageBox.Show("Государственный номер должен быть уникальным.");
+                    UpdateWarningText("Государственный номер должен быть уникальным.");
                     return;
                 }
 
                 // Если проверки пройдены успешно, сохраняем автомобиль в базу данных
-                dbManager.SaveCars(new List<Car> { newCar });
+                dbManager.SaveCar(newCar);
 
                 // Обновляем DataGrid после добавления нового автомобиля
                 LoadDataFromDatabase();
             }
         }
 
+        // Обработчик события клика по кнопке removeButton
         // Обработчик события клика по кнопке removeButton
         private void removeButton_Click(object sender, RoutedEventArgs e)
         {
@@ -207,6 +251,7 @@ namespace CarsBD
             // После закрытия окна обновляем данные в DataGrid
             LoadDataFromDatabase();
         }
+
 
         // Обработчик события клика по кнопке searchButton
         private void searchButton_Click(object sender, RoutedEventArgs e)
@@ -267,6 +312,11 @@ namespace CarsBD
         {
 
         }
+        private void UpdateWarningText(string message)
+        {
+            TBWarning.Text = message;
+        }
+
     }
 }
 

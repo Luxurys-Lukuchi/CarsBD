@@ -20,6 +20,12 @@ namespace CarsBD
     public partial class DeleteCarWindow : Window
     {
         private readonly DatabaseManager dbManager; // Менеджер базы данных для выполнения операций удаления
+        public event EventHandler<string> MessageRaised;
+
+        private void RaiseMessage(string message)
+        {
+            MessageRaised?.Invoke(this, message);
+        }
 
         // Конструктор класса DeleteCarWindow
         public DeleteCarWindow(DatabaseManager dbManager)
@@ -44,7 +50,7 @@ namespace CarsBD
                 }
                 else
                 {
-                    MessageBox.Show("Введите корректный ID машины."); // Вывод сообщения об ошибке в случае некорректного ввода
+                    RaiseMessage("Введите корректный ID машины."); // Вывод сообщения об ошибке в случае некорректного ввода
                 }
             }
             else if (deleteByNumberRadioButton.IsChecked == true)
@@ -59,12 +65,12 @@ namespace CarsBD
                 }
                 else
                 {
-                    MessageBox.Show("Введите корректный номер машины."); // Вывод сообщения об ошибке в случае некорректного ввода
+                    RaiseMessage("Введите корректный номер машины."); // Вывод сообщения об ошибке в случае некорректного ввода
                 }
             }
             else
             {
-                MessageBox.Show("Выберите метод удаления."); // Вывод сообщения об ошибке при отсутствии выбранного метода
+                RaiseMessage("Выберите метод удаления."); // Вывод сообщения об ошибке при отсутствии выбранного метода
             }
         }
 

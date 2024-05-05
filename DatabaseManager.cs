@@ -8,9 +8,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+
 //DataBaseManager.cs
 
 // Класс DatabaseManager представляет менеджер базы данных
+
+
 namespace CarsBD
 {
     public class Car
@@ -22,65 +25,93 @@ namespace CarsBD
         public string Статус { get; set; }
     }
 
-    // Класс, отвечающий за взаимодействие с базой данных
     public class DatabaseManager
     {
-        private readonly string connectionString; // Строка подключения к базе данных
+        public event EventHandler<string> MessageRaised;
+        private readonly string connectionString;
+        private List<Car> cars;
 
-        // Конструктор класса DatabaseManager
         public DatabaseManager(string connectionString)
         {
-            this.connectionString = connectionString; // Инициализация строки подключения
+            this.connectionString = connectionString;
+            cars = new List<Car>();
+            LoadCarsFromDatabase();
         }
-
-        // Метод для сохранения списка автомобилей в базу данных
-        public void SaveCars(List<Car> cars)
+        private void RaiseMessage(string message)
+        {
+            MessageRaised?.Invoke(this, message);
+        }
+        private void LoadCarsFromDatabase()
         {
             try
             {
-                // Создание подключения к базе данных PostgreSQL
                 using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
                 {
-                    connection.Open(); // Открытие соединения
-
-                    // Проход по списку автомобилей для сохранения каждого из них в базе данных
-                    foreach (Car car in cars)
+                    connection.Open();
+                    string sql = "SELECT * FROM public.\"Машина\"";
+                    using (NpgsqlCommand cmd = new NpgsqlCommand(sql, connection))
                     {
-                        string sql = "";
+                        NpgsqlDataAdapter adapter = new NpgsqlDataAdapter(cmd);
+                        DataTable dataTable = new DataTable();
+                        adapter.Fill(dataTable);
 
-                        if (car.ID == 0)
+                        foreach (DataRow row in dataTable.Rows)
                         {
-                            // Если ID автомобиля равен 0, то он считается новым и будет добавлен в базу данных
-                            sql = $"INSERT INTO public.\"Машина\" (\"Марка\", \"Модель\", \"Номер\", \"Статус\") VALUES ('{car.Марка}', '{car.Модель}', '{car.Номер}', '{car.Статус}')";
-                        }
-                        else
-                        {
-                            // В противном случае, осуществляется обновление данных о существующем автомобиле
-                            sql = $"UPDATE public.\"Машина\" " +
-                                 $"SET \"Марка\" = '{car.Марка}', " +
-                                 $"\"Модель\" = '{car.Модель}', " +
-                                 $"\"Номер\" = '{car.Номер}', " +
-                                 $"\"Статус\" = '{car.Статус}' " +
-                                 $"WHERE \"ID\" = {car.ID}";
-                        }
-
-                        // Выполнение SQL-запроса
-                        using (NpgsqlCommand cmd = new NpgsqlCommand(sql, connection))
-                        {
-                            cmd.ExecuteNonQuery(); // Выполнение запроса без возврата данных
+                            cars.Add(new Car
+                            {
+                                ID = Convert.ToInt32(row["ID"]),
+                                Марка = row["Марка"].ToString(),
+                                Модель = row["Модель"].ToString(),
+                                Номер = row["Номер"].ToString(),
+                                Статус = row["Статус"].ToString()
+                            });
                         }
                     }
                 }
-
-                MessageBox.Show("Данные успешно сохранены в базе данных PostgreSQL.");
             }
             catch (NpgsqlException ex)
             {
-                MessageBox.Show($"Ошибка при сохранении данных в базу данных PostgreSQL: {ex.Message}");
+                RaiseMessage($"Ошибка при загрузке данных из базы данных: {ex.Message}");
             }
         }
 
-        // Метод для удаления автомобиля из базы данных по его ID
+        public void SaveCar(Car car)
+        {
+            try
+            {
+                using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+                {
+                    connection.Open();
+                    string sql = "";
+
+                    if (car.ID == 0)
+                    {
+                        sql = $"INSERT INTO public.\"Машина\" (\"Марка\", \"Модель\", \"Номер\", \"Статус\") VALUES ('{car.Марка}', '{car.Модель}', '{car.Номер}', '{car.Статус}')";
+                    }
+                    else
+                    {
+                        sql = $"UPDATE public.\"Машина\" " +
+                             $"SET \"Марка\" = '{car.Марка}', " +
+                             $"\"Модель\" = '{car.Модель}', " +
+                             $"\"Номер\" = '{car.Номер}', " +
+                             $"\"Статус\" = '{car.Статус}' " +
+                             $"WHERE \"ID\" = {car.ID}";
+                    }
+
+                    using (NpgsqlCommand cmd = new NpgsqlCommand(sql, connection))
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+
+                RaiseMessage("Данные успешно сохранены в базе данных PostgreSQL.");
+            }
+            catch (NpgsqlException ex)
+            {
+                RaiseMessage($"Ошибка при сохранении данных в базе данных PostgreSQL: {ex.Message}");
+            }
+        }
+
         public void DeleteCarByID(int carID)
         {
             try
@@ -94,15 +125,14 @@ namespace CarsBD
                         cmd.ExecuteNonQuery();
                     }
                 }
-                MessageBox.Show("Машина успешно удалена из базы данных.");
+                RaiseMessage("Машина успешно удалена из базы данных.");
             }
             catch (NpgsqlException ex)
             {
-                MessageBox.Show($"Ошибка при удалении машины из базы данных: {ex.Message}");
+                RaiseMessage($"Ошибка при удалении машины из базы данных: {ex.Message}");
             }
         }
 
-        // Метод для удаления автомобиля из базы данных по его номеру
         public void DeleteCarByNumber(string carNumber)
         {
             try
@@ -116,15 +146,14 @@ namespace CarsBD
                         cmd.ExecuteNonQuery();
                     }
                 }
-                MessageBox.Show("Машина успешно удалена из базы данных.");
+                RaiseMessage("Машина успешно удалена из базы данных.");
             }
             catch (NpgsqlException ex)
             {
-                MessageBox.Show($"Ошибка при удалении машины из базы данных: {ex.Message}");
+                RaiseMessage($"Ошибка при удалении машины из базы данных: {ex.Message}");
             }
         }
 
-        // Метод для проверки уникальности номера автомобиля в базе данных
         public bool IsCarNumberUnique(string number)
         {
             try
@@ -136,18 +165,17 @@ namespace CarsBD
                     using (NpgsqlCommand cmd = new NpgsqlCommand(sql, connection))
                     {
                         int count = Convert.ToInt32(cmd.ExecuteScalar());
-                        return count == 0; // Возвращается true, если количество записей с заданным номером равно 0
+                        return count == 0;
                     }
                 }
             }
             catch (NpgsqlException ex)
             {
-                MessageBox.Show($"Ошибка при проверке уникальности номера машины в базе данных PostgreSQL: {ex.Message}");
+                RaiseMessage($"Ошибка при проверке уникальности номера машины в базе данных PostgreSQL: {ex.Message}");
                 return false;
             }
         }
 
-        // Метод для поиска автомобилей в базе данных по указанным параметрам
         public List<Car> SearchCars(string marca, string model, string number, string status)
         {
             try
@@ -158,7 +186,6 @@ namespace CarsBD
                     string sql = "SELECT * FROM public.\"Машина\" WHERE ";
                     List<string> conditions = new List<string>();
 
-                    // Формирование SQL-запроса с учетом указанных параметров поиска
                     if (!string.IsNullOrEmpty(marca))
                         conditions.Add($"\"Марка\" LIKE '%{marca}%'");
                     if (!string.IsNullOrEmpty(model))
@@ -168,7 +195,7 @@ namespace CarsBD
                     if (!string.IsNullOrEmpty(status))
                         conditions.Add($"\"Статус\" LIKE '%{status}%'");
 
-                    sql += string.Join(" AND ", conditions); // Объединение условий запроса с помощью оператора AND
+                    sql += string.Join(" AND ", conditions);
 
                     using (NpgsqlCommand cmd = new NpgsqlCommand(sql, connection))
                     {
@@ -179,7 +206,6 @@ namespace CarsBD
                         List<Car> foundCars = new List<Car>();
                         foreach (DataRow row in dataTable.Rows)
                         {
-                            // Создание объектов Car на основе данных из базы и добавление их в список найденных автомобилей
                             foundCars.Add(new Car
                             {
                                 ID = Convert.ToInt32(row["ID"]),
@@ -189,18 +215,19 @@ namespace CarsBD
                                 Статус = row["Статус"].ToString()
                             });
                         }
-                        return foundCars; // Возврат списка найденных автомобилей
+                        return foundCars;
                     }
                 }
             }
             catch (NpgsqlException ex)
             {
-                MessageBox.Show($"Ошибка при поиске машин в базе данных: {ex.Message}");
-                return new List<Car>(); // В случае ошибки возвращается пустой список
+                RaiseMessage($"Ошибка при поиске машин в базе данных: {ex.Message}");
+                return new List<Car>();
             }
         }
     }
 }
+
 
 
 

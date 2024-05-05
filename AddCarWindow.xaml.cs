@@ -28,6 +28,15 @@ namespace CarsBD
             InitializeComponent(); // Инициализация компонентов окна
         }
 
+        // Событие для передачи сообщений об ошибке или уведомления обратно в MainWindow
+        public event EventHandler<string> MessageRaised;
+
+        // Метод для вызова события с сообщением
+        private void RaiseMessage(string message)
+        {
+            MessageRaised?.Invoke(this, message);
+        }
+
         // Обработчик события нажатия кнопки добавления
         private void addButton_Click(object sender, RoutedEventArgs e)
         {
@@ -40,7 +49,7 @@ namespace CarsBD
             // Проверка наличия пустых полей
             if (string.IsNullOrEmpty(marca) || string.IsNullOrEmpty(model) || string.IsNullOrEmpty(number) || string.IsNullOrEmpty(status))
             {
-                MessageBox.Show("Please fill in all fields."); // Вывод сообщения об ошибке
+                RaiseMessage("Please fill in all fields."); // Вывод сообщения об ошибке
                 return; // Прекращение выполнения метода
             }
 

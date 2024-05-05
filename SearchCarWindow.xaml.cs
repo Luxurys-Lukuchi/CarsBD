@@ -20,6 +20,7 @@ namespace CarsBD
     {
         private readonly DatabaseManager dbManager; // Менеджер базы данных для выполнения операций поиска
 
+
         // Конструктор класса SearchCarWindow
         public SearchCarWindow(DatabaseManager dbManager)
         {
