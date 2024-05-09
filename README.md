@@ -157,3 +157,34 @@ DeleteCarWindow --* DatabaseManager : Композицыя
 AddCarWindow --* Car : Компазицыя
 
 @enduml
+
+
+# Пример того задать свой стил для нескольких обьектов
+
+В XAML (Extensible Application Markup Language) можно задать стиль нескольким объектам одновременно. Это можно сделать, определив стиль в ресурсах и затем применив его к нескольким элементам интерфейса
+
+<Window.Resources>
+    
+    <!-- Определение стиля -->
+    
+    <Style x:Key="StylePrimer" TargetType="Control">
+    
+        <Setter Property="FontFamily" Value="Arial"/>
+        
+        <Setter Property="Foreground" Value="Blue"/>
+    
+    </Style>
+
+</Window.Resources>
+
+<StackPanel>
+
+  <!-- Применение стиля к нескольким элементам -->
+    
+  <Label Content="Пример текста" Style="{StaticResource StylePrimer}"/>
+  
+  <Button Content="Пример кнопки" Style="{StaticResource StylePrimer}"/>
+
+</StackPanel>
+
+В этом примере мы определяем стиль с именем "StylePrimer", который устанавливает шрифт Arial и синий цвет для всех элементов управления. Затем мы применяем этот стиль к Label и Button, используя атрибут Style.
