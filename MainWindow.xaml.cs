@@ -23,7 +23,7 @@ namespace CarsBD
 {
     public partial class MainWindow : Window
     {
-        private readonly string connectionString = "Host=localhost;Username=postgres;Password=1234;Database=Cars";
+        private readonly string connectionString = "секрет так как гитхаб ругается";
         private DispatcherTimer autoSaveTimer;
         private bool autoSaveEnabled = false;
         private DatabaseManager dbManager;
